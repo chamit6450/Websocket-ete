@@ -1,33 +1,57 @@
-import { useEffect, useRef, useState} from 'react'
+
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 function App() {
-  const [socket, setSocket] = useState();
+  const [messages, setMessages] = useState(["hi there", "hello"]);
+  const wsRef = useRef();
   const inputRef = useRef();
 
-  function sendMessage() {
-    if (!socket) {
-      return;
-    }
-    //@ts-ignore
-    const message = inputRef.current.value;
-    //@ts-ignore
-    socket.send(message)
-  }
-
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8081");
-    setSocket(ws)
+    const ws = new WebSocket("http://localhost:8081");
+    ws.onmessage = (event) => {
+      setMessages(m => [...m, event.data])
+    }
+    wsRef.current = ws;
 
-    ws.onmessage = (ev) => {
-      alert(ev.data);
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        type: "join",
+        payload: {
+          roomId: "red"
+        }
+      }))
+    }
+    return () => {
+      ws.close()
     }
   }, []);
 
   return (
-    <div>
-      <input ref={inputRef} type="text" placeholder="Message..."></input>
-      <button onClick={sendMessage}>Send</button>
+    <div className='h-screen bg-black'>
+      <br /><br /><br />
+      <div className='h-[85vh]'>
+        {messages.map(message => <div className='m-8'> 
+          <span className='bg-white text-black rounded p-4 '>            
+            {message} 
+          </span>
+        </div>)}
+      </div>
+      <div className='w-full bg-white flex'>
+        <input ref={inputRef} id="message" className="flex-1 p-4"></input>
+        <button onClick={() => {
+          const message = inputRef.current?.value;
+          wsRef.current.send(JSON.stringify({
+            type: "chat",
+            payload: {
+              message: message
+            }
+          }))
+
+        }} className='bg-purple-600 text-white p-4'>
+          Send message
+        </button>
+      </div>
     </div>
   )
 }
