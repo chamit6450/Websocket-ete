@@ -12,6 +12,7 @@ function App() {
     ws.onmessage = (event) => {
       setMessages(m => [...m, event.data])
     }
+    //@ts-ignore
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -40,7 +41,9 @@ function App() {
       <div className='w-full bg-white flex'>
         <input ref={inputRef} id="message" className="flex-1 p-4"></input>
         <button onClick={() => {
+          //@ts-ignore
           const message = inputRef.current?.value;
+          //@ts-ignore
           wsRef.current.send(JSON.stringify({
             type: "chat",
             payload: {
